@@ -17,7 +17,7 @@ The goals / steps of this project are the following:
 [image2]: ./output_images/test1.png "Road Transformed"
 [image3]: ./output_images/bird_view.png "Bird View Example"
 [image4]: ./output_images/binary_bird_view.png "Binary Bird View Example"
-[image5]: ./examples/color_fit_lines.jpg "Fit Visual"
+[image5]: ./output_images/color_fit_lines.png "Fit Visual"
 [image6]: ./output_images/example_output.png "Output"
 [video1]: ./test_videos_output/project_video.mp4 "Video"
 [video2]: ./test_videos_output/challenge_video.mp4 "Video"
@@ -49,6 +49,8 @@ Based on the the camera matrix and distortion coefficients from Camera Calibrati
 
 #### 2. Describe how I performed a perspective transform and provide an example of a transformed image.
 
+It is different to the suggested steps from lecture that perspective transform was performed before the transformation of the thresholded binary image. It helps improve the performance of both gradients and color transform, since the normalization is applied on the image in the next step. 
+
 The code for my perspective transform includes in a function called `birds_eye()`, which appears in `Define Image procesing() class` code cell in the IPython notebook located in "./examples/AdvanceLaneFinding.ipynb".  The `birds_eye()` function takes as inputs a distortion-corrected image (`undistorted_img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
 
 ```python
@@ -75,20 +77,22 @@ I verified that my perspective transform was working as expected by drawing the 
 
 #### 3. Describe how I used color transforms, gradients or other methods to create a thresholded binary bird-view image.  Provide an example of a binary image result.
 
-I used a combination of binary images created by gradient thresholds (gradient in x direction, gradient in y direction and magnitude of the gradient) and color thresholds (S channel of HLS color space, B channel of LAB color space, V channel of HSV color space and L channel of HLS color space) (the code for thresholding includes a function called `score_pixles()`, which appears in `Define Image procesing() class` code cell in the IPython notebook located in "./examples/AdvanceLaneFinding.ipynb"). Each single binary image was normalized using `cv2.createCLAHE()` and threshold to binary using `cv2.threshold`. The final binary image was a thresholded binary image based on the summation of all single binary images. Here's an example of my output for this step. This part is inspired by [Peter Moran's Bolg](http://petermoran.org/robust-lane-tracking/). However, I modified the major part of this code and implemented typical land finding algorithm, which is provided in lecture, to get similar results with his, which had a Kalman filter based land finding algorithm.
+I created two binary images, which are designed to detect the yellow and white lanes, respecitively. The white lane was identified by gradient in x direction and color thresholds (L channel of HLS color space, V channel of HSV color space, and G channel of BGR color space), as well as the yellow lane was identified by gradient in x direction and color thresholds (B channel of LAB color space, R channel of BGR color space, and S channel of HLS color space). Then, the final binary image was the result of OR operation of the white lane bianry image and the yellow lane binary image.
+
+The code for identification includes a function called `score_pixles()` and `single_color_detect`, which appears in `Define Image procesing() class` code cell in the IPython notebook located in "./examples/AdvanceLaneFinding.ipynb"). Each single binary image was normalized using `cv2.createCLAHE()` and threshold to binary using `cv2.threshold`.  Here's an example of my output for this step. Based on the review's suggestion, isolating the yellow and white lanes, I improve the binary image result.
 
 ![alt text][image4]
 
 
 #### 4. Describe how I identified lane-line pixels and fit their positions with a polynomial?
 
-Then I find the starting point of each lane with the method of taking histogram of the bottom half of the image. Based on sliding windows, I identified the nonzero pixels in the binary image to each lane. And fit my lane lines with a 2nd order polynomial kinda like this (note: this is not actually from one of the test images):
+Then I find the starting point of each lane with the method of taking histogram of the bottom half of the image. Based on sliding windows, I identified the nonzero pixels in the binary image to each lane. And fit my lane lines with a 2nd order polynomial kinda like this:
 
 ![alt text][image5]
 
 The pixels of new lanes in a new binary image can be identified with the identified lines in the previous frame of video. 
 
-The code for identifying lanes includes in a function called `Process_image()`, which appears in `Define Process_image() class` code cell in the IPython notebook located in "./examples/AdvanceLaneFinding.ipynb".  The `Process_image()` function takes as inputs an original image (`image`).
+The code for sliding windows and fit a 2nd order polynomial includes in a function called `sliding_window()`, which appears in `Define Sliding Window function` code cell in the IPython notebook located in "./examples/AdvanceLaneFinding.ipynb". Also, the code for identifying and updating lanes includes in a class called `Line()`, which appears in `Define Line() class` code cell in the IPython notebook located in "./examples/AdvanceLaneFinding.ipynb".  Finally, the code for demonstrating the result of lane finding includes in a function called `Process_image()`, which appears in `Define Process_image() function` code cell in the IPython notebook located in "./examples/AdvanceLaneFinding.ipynb".
 
  
 #### 5. Describe how I calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
